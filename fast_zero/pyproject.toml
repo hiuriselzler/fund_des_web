@@ -8,7 +8,10 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.13,<4.0" 
 dependencies = [
-    "fastapi[standard] (>=0.128.0,<0.129.0)"
+    "fastapi[standard] (>=0.128.0,<0.129.0)",
+    "pydantic-settings (>=2.12.0,<3.0.0)",
+    "sqlalchemy (>=2.0.45,<3.0.0)",
+    "alembic (>=1.18.1,<2.0.0)"
 ]
 
 
@@ -26,12 +29,22 @@ dev = [
 
 [tool.ruff]
 line-length = 79
+extend-exclude = ['migrations']
+
+
+[tool.ruff.lint]
+preview = true
+select = ['I', 'F', 'E', 'W', 'PL', 'PT']
+
 
 [tool.ruff.format]
 preview = true
+quote-style = 'single'
+
 
 [tool.pytest.ini_options]
 pythonpath = "."
+addopts = '-p no:warnings'
 
 [tool.taskipy.tasks]
 lint = 'ruff check'
