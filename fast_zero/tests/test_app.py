@@ -1,20 +1,19 @@
-
 from http import HTTPStatus
 
 from fast_zero.schemas import UserPublic
 
 
-def test_deve_retornar_ok_e_ola_mundo(Client):
+def test_deve_retornar_ok_e_ola_mundo(client):
 
-    response = Client.get("/")
+    response = client.get('/')
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {"message": "Olá Mundo!"}
+    assert response.json() == {'message': 'Olá Mundo!'}
 
 
-def test_create_user(Client):
-    response = Client.post(
-        "/users/",
+def test_create_user(client):
+    response = client.post(
+        '/users/',
         json={
             'username': 'alice',
             'email': 'alice@example.com',
@@ -29,17 +28,16 @@ def test_create_user(Client):
     }
 
 
-def test_read_users(Client):
-    response = Client.get('/users/')
+def test_read_users(client):
+    response = client.get('/users/')
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        'users': []
-    }
+    assert response.json() == {'users': []}
 
 
-def test_update_user(Client, user):
-    response = Client.put(
-        '/users/1',
+def test_update_user(client, user, token):
+    response = client.put(
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'bob',
             'email': 'bob@example.com',
@@ -50,19 +48,19 @@ def test_update_user(Client, user):
     assert response.json() == {
         'username': 'bob',
         'email': 'bob@example.com',
-        'id': 1,
+        'id': user.id,
     }
 
 
-def test_delete_user_should_return_not_found__exercicio(Client):
-    response = Client.delete('/users/666')
+def test_delete_user_should_return_not_found__exercicio(client):
+    response = client.delete('/users/666')
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'User not found'}
 
 
-def test_update_user_should_return_not_found__exercicio(Client):
-    response = Client.put(
+def test_update_user_should_return_not_found__exercicio(client):
+    response = client.put(
         '/users/666',
         json={
             'username': 'bob',
@@ -74,10 +72,11 @@ def test_update_user_should_return_not_found__exercicio(Client):
     assert response.json() == {'detail': 'User not found'}
 
 
-def test_update_integrity_error(client, user):
+def test_update_integrity_error(client, user, token):
     # Criando um registro para "fausto"
     client.post(
-        '/users',
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'fausto',
             'email': 'fausto@example.com',
@@ -100,26 +99,29 @@ def test_update_integrity_error(client, user):
     }
 
 
-def test_get_user_should_return_not_found__exercicio(Client):
-    response = Client.get('/users/666')
+def test_get_user_should_return_not_found__exercicio(client):
+    response = client.get('/users/666')
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'User not found'}
 
 
-def test_get_user___exercicio(Client):
-    response = Client.get('/users/1')
+def test_get_user___exercicio(client, user):
+    response = client.get(f'/users/{user.id}')
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-        'username': 'bob',
-        'email': 'bob@example.com',
-        'id': 1,
+        'username': user.username,
+        'email': user.email,
+        'id': user.id,
     }
 
 
-def test_delete_user(Client, user):
-    response = Client.delete('/users/1')
+def test_delete_user(client, user, token):
+    response = client.delete(
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'message': 'User deleted'}
@@ -129,3 +131,15 @@ def test_read_users_with_users(client, user):
     user_schema = UserPublic.model_validate(user).model_dump()
     response = client.get('/users/')
     assert response.json() == {'users': [user_schema]}
+
+
+def test_get_token(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': user.clean_password},
+    )
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert 'access_token' in token
+    assert 'token_type' in token
