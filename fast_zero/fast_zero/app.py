@@ -1,12 +1,13 @@
 from http import HTTPStatus
-from fastapi import FastAPI, HTTPException, Depends
-from fast_zero.schemas import Message, UserList, UserPublic, UserSchema
-from sqlalchemy.orm import Session
+
+from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
 from fast_zero.database import get_session
 from fast_zero.models import User
-from sqlalchemy.exc import IntegrityError
-
+from fast_zero.schemas import Message, UserList, UserPublic, UserSchema
 
 app = FastAPI()
 
@@ -20,7 +21,8 @@ database = []
 
 
 @app.post("/users/", status_code=HTTPStatus.CREATED, response_model=UserPublic)
-def create_user(user: UserSchema,  session: Session = Depends(get_session)):
+def create_user(user: UserSchema,
+                session: Session = Depends(get_session)):
     db_user = session.scalar(
         select(User).where(
             (User.username == user.username) | (User.email == user.email)
@@ -48,6 +50,7 @@ def create_user(user: UserSchema,  session: Session = Depends(get_session)):
 
     return db_user
 
+
 @app.get("/users/", response_model=UserList)
 def read_users(
     skip: int = 0, limit: int = 100, session: Session = Depends(get_session)
@@ -56,9 +59,10 @@ def read_users(
     return {'users': users}
 
 
-
 @app.put("/users/{user_id}", response_model=UserPublic)
-def update_user(user_id: int, user: UserSchema, session: Session = Depends(get_session)):
+def update_user(user_id: int,
+                user: UserSchema,
+                session: Session = Depends(get_session)):
     db_user = session.scalar(select(User).where(User.id == user_id))
     if not db_user:
         raise HTTPException(
@@ -73,9 +77,9 @@ def update_user(user_id: int, user: UserSchema, session: Session = Depends(get_s
 
         return db_user
 
-    except IntegrityError: 
+    except IntegrityError:
         raise HTTPException(
-            status_code=HTTPStatus.CONFLICT, 
+            status_code=HTTPStatus.CONFLICT,
             detail='Username or Email already exists'
         )
 
@@ -94,11 +98,12 @@ def delete_user(user_id: int, session: Session = Depends(get_session)):
 
     return {'message': 'User deleted'}
 
+
 @app.get("/users/{user_id}", response_model=UserPublic)
 def read_user(user_id: int):
     if user_id < 1 or user_id > len(database):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="User not found"
         )
-        
+
     return database[user_id - 1]

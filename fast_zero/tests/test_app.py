@@ -1,24 +1,21 @@
-#Por convenção, todos os arquivos de teste do pytest devem iniciar com um prefixo test_.py
-
 
 from http import HTTPStatus
+
 from fast_zero.schemas import UserPublic
 
 
-
-def test_deve_retornar_ok_e_olá_mundo(Client):
-    
+def test_deve_retornar_ok_e_ola_mundo(Client):
 
     response = Client.get("/")
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {"message":"Olá Mundo!"}
+    assert response.json() == {"message": "Olá Mundo!"}
 
 
 def test_create_user(Client):
     response = Client.post(
         "/users/",
-        json = {
+        json={
             'username': 'alice',
             'email': 'alice@example.com',
             'password': 'secret',
@@ -31,12 +28,14 @@ def test_create_user(Client):
         'id': 1,
     }
 
+
 def test_read_users(Client):
     response = Client.get('/users/')
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
         'users': []
     }
+
 
 def test_update_user(Client, user):
     response = Client.put(
@@ -54,11 +53,13 @@ def test_update_user(Client, user):
         'id': 1,
     }
 
+
 def test_delete_user_should_return_not_found__exercicio(Client):
     response = Client.delete('/users/666')
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'User not found'}
+
 
 def test_update_user_should_return_not_found__exercicio(Client):
     response = Client.put(
@@ -72,9 +73,10 @@ def test_update_user_should_return_not_found__exercicio(Client):
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'User not found'}
 
+
 def test_update_integrity_error(client, user):
     # Criando um registro para "fausto"
-    client.post( 
+    client.post(
         '/users',
         json={
             'username': 'fausto',
@@ -84,7 +86,7 @@ def test_update_integrity_error(client, user):
     )
 
     # Alterando o user.username das fixture para fausto
-    response_update = client.put( 
+    response_update = client.put(
         f'/users/{user.id}',
         json={
             'username': 'fausto',
@@ -96,6 +98,7 @@ def test_update_integrity_error(client, user):
     assert response_update.json() == {
         'detail': 'Username or Email already exists'
     }
+
 
 def test_get_user_should_return_not_found__exercicio(Client):
     response = Client.get('/users/666')
@@ -114,6 +117,7 @@ def test_get_user___exercicio(Client):
         'id': 1,
     }
 
+
 def test_delete_user(Client, user):
     response = Client.delete('/users/1')
 
@@ -125,5 +129,3 @@ def test_read_users_with_users(client, user):
     user_schema = UserPublic.model_validate(user).model_dump()
     response = client.get('/users/')
     assert response.json() == {'users': [user_schema]}
-
-
