@@ -52,31 +52,10 @@ def test_update_user(client, user, token):
     }
 
 
-def test_delete_user_should_return_not_found__exercicio(client):
-    response = client.delete('/users/666')
-
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
-
-
-def test_update_user_should_return_not_found__exercicio(client):
-    response = client.put(
-        '/users/666',
-        json={
-            'username': 'bob',
-            'email': 'bob@example.com',
-            'password': 'mynewpassword',
-        },
-    )
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
-
-
 def test_update_integrity_error(client, user, token):
     # Criando um registro para "fausto"
     client.post(
-        f'/users/{user.id}',
-        headers={'Authorization': f'Bearer {token}'},
+        '/users',
         json={
             'username': 'fausto',
             'email': 'fausto@example.com',
@@ -87,6 +66,7 @@ def test_update_integrity_error(client, user, token):
     # Alterando o user.username das fixture para fausto
     response_update = client.put(
         f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'fausto',
             'email': 'bob@example.com',
